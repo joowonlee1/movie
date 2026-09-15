@@ -13,6 +13,89 @@ from datetime import datetime, timedelta, timezone      # 날짜/시간 계산 �
 # 브라우저 탭에 보일 제목과, 표를 넓게 볼 수 있는 레이아웃을 지정합니다.
 st.set_page_config(page_title="어제의 박스오피스", layout="wide")
 
+
+# ── 배경을 '서울 시내 분위기'로 꾸미기 ──────────────────────────
+def inject_seoul_background():
+    """
+    화면 배경을 '해질녘 서울 하늘 + 도심 스카이라인' 느낌으로 바꿉니다.
+    외부 이미지 링크 없이, 그라데이션과 직접 그린 건물 실루엣(SVG)만 사용하므로
+    이미지가 깨질 걱정이 없습니다. 본문은 반투명 흰 카드 위에 얹어
+    표·그래프·글자가 또렷하게 보이도록 합니다.
+    """
+    from urllib.parse import quote   # SVG 그림을 주소(URL) 형식으로 바꿔 주는 도구
+
+    # 도심 스카이라인을 건물 사각형들과 남산타워 실루엣으로 그린 그림(SVG)입니다.
+    skyline_svg = """<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320' preserveAspectRatio='xMidYMax slice'>
+      <g fill='#141c33'>
+        <rect x='0' y='230' width='100' height='90'/>
+        <rect x='95' y='185' width='80' height='135'/>
+        <rect x='180' y='210' width='70' height='110'/>
+        <rect x='255' y='150' width='90' height='170'/>
+        <rect x='350' y='200' width='60' height='120'/>
+        <rect x='415' y='235' width='80' height='85'/>
+        <rect x='500' y='160' width='75' height='160'/>
+        <rect x='580' y='205' width='65' height='115'/>
+        <rect x='650' y='120' width='95' height='200'/>
+        <rect x='750' y='190' width='70' height='130'/>
+        <rect x='820' y='140' width='42' height='180'/>
+        <rect x='836' y='72' width='10' height='70'/>
+        <circle cx='841' cy='66' r='12'/>
+        <rect x='838' y='40' width='6' height='28'/>
+        <rect x='880' y='200' width='80' height='120'/>
+        <rect x='965' y='165' width='70' height='155'/>
+        <rect x='1040' y='210' width='85' height='110'/>
+        <rect x='1130' y='150' width='80' height='170'/>
+        <rect x='1215' y='225' width='70' height='95'/>
+        <rect x='1290' y='180' width='80' height='140'/>
+        <rect x='1375' y='215' width='65' height='105'/>
+      </g>
+      <g fill='#ffd27f' opacity='0.85'>
+        <rect x='120' y='205' width='7' height='9'/><rect x='140' y='225' width='7' height='9'/>
+        <rect x='275' y='175' width='7' height='9'/><rect x='300' y='210' width='7' height='9'/>
+        <rect x='520' y='185' width='7' height='9'/><rect x='545' y='215' width='7' height='9'/>
+        <rect x='670' y='150' width='8' height='10'/><rect x='700' y='195' width='8' height='10'/>
+        <rect x='985' y='190' width='7' height='9'/><rect x='1010' y='225' width='7' height='9'/>
+        <rect x='1150' y='180' width='7' height='9'/><rect x='1175' y='215' width='7' height='9'/>
+        <rect x='1310' y='205' width='7' height='9'/>
+      </g>
+    </svg>"""
+
+    # SVG를 배경 이미지로 쓸 수 있도록 주소 형식으로 인코딩합니다.
+    skyline = quote(skyline_svg)
+
+    # CSS로 배경과 본문 카드 모양을 지정합니다.
+    st.markdown(
+        f"""
+        <style>
+        /* 앱 전체 배경: 위(보라)→파랑→아래(주황) 해질녘 하늘 + 도심 스카이라인 */
+        .stApp {{
+            background-image:
+                url("data:image/svg+xml,{skyline}"),
+                linear-gradient(to bottom, #2b1055 0%, #4a5a9e 45%, #8f7fc4 70%, #ffb56b 100%);
+            background-repeat: no-repeat, no-repeat;
+            background-position: bottom center, center;
+            background-size: 100% auto, cover;
+            background-attachment: fixed, fixed;
+        }}
+        /* 상단 헤더 막대를 투명하게 만들어 하늘이 이어져 보이게 */
+        [data-testid="stHeader"] {{ background: transparent; }}
+        /* 본문을 반투명 흰 카드 위에 올려 글자가 잘 보이도록 */
+        .block-container {{
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 18px;
+            padding: 2rem 2.2rem 3rem;
+            margin-top: 1.2rem;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.28);
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# 위에서 만든 배경 꾸미기를 실제로 적용합니다.
+inject_seoul_background()
+
 # KOBIS 일별 박스오피스 요청 주소 (공식 문서에서 가져온 값)
 API_URL = "https://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json"
 
