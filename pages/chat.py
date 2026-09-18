@@ -42,8 +42,6 @@ TONES = {
 }
 
 # 화면 위쪽에 보일 제목과 안내 문구입니다.
-st.title("🤖 AI 채팅")
-st.caption("궁금한 것을 물어보면 AI가 쉬운 말로 답해 줘요.")
 # 파스텔 배경과 작은 스티커로 꾸민 채팅방입니다.
 # 사용자 입력은 HTML에 넣지 않고, Streamlit의 기본 위젯으로 표시합니다.
 st.markdown("""
@@ -201,69 +199,6 @@ if "messages" not in st.session_state:
 def on_tone_change():
     st.session_state.system_prompt = TONES[st.session_state.tone]
 
-# 성격 선택을 카드 모양으로 꾸밉니다. 기본 라디오 선택 기능은 유지합니다.
-st.markdown("""
-<style>
-[data-testid="stSidebar"] [role="radiogroup"] { gap: 10px; }
-[data-testid="stSidebar"] label[data-baseweb="radio"] {
-    box-sizing: border-box; width: 100%; margin: 0; padding: 15px 14px;
-    border: 1px solid rgba(148,163,184,.3); border-radius: 16px;
-    background: rgba(148,163,184,.06);
-    transition: background 160ms ease, border-color 160ms ease;
-    cursor: pointer;
-}
-[data-testid="stSidebar"] label[data-baseweb="radio"]:hover {
-    border-color: #a78bfa; background: rgba(139,92,246,.08);
-}
-[data-testid="stSidebar"] label[data-baseweb="radio"]:has(input:checked) {
-    border-color: #a78bfa; background: rgba(139,92,246,.13);
-    box-shadow: 0 3px 12px rgba(139,92,246,.1);
-}
-[data-testid="stSidebar"] label[data-baseweb="radio"]:focus-within {
-    outline: 2px solid #a78bfa; outline-offset: 3px;
-}
-[data-testid="stSidebar"] label[data-baseweb="radio"] p {
-    white-space: pre-line; line-height: 1.65; font-size: .92rem;
-}
-@media (prefers-reduced-motion: reduce) {
-    [data-testid="stSidebar"] label[data-baseweb="radio"] { transition: none; }
-}
-</style>
-""", unsafe_allow_html=True)
-
-# 화면용 설명입니다. AI에게 전달하는 성격 문장은 그대로 유지합니다.
-TONE_LABELS = {
-    "친절한 선생님": "🌷 친절한 선생님\n차근차근, 쉬운 말로 설명해요",
-    "시크한 전문가": "✨ 시크한 전문가\n핵심만 콕, 간결하게 알려 줘요",
-    "되물어보는 조교": "🌱 되물어보는 조교\n힌트와 질문으로 생각을 도와줘요",
-}
-
-with st.sidebar:
-    st.caption("나에게 맞는 배움의 방식")
-    st.subheader("어떤 선생님과 이야기할까요?")
-    st.caption("마음에 드는 스타일을 골라 보세요.")
-    st.radio(
-        "선생님 성격 선택",
-        list(TONES.keys()),
-        format_func=lambda tone: TONE_LABELS[tone],
-        key="tone",
-        on_change=on_tone_change,
-        label_visibility="collapsed",
-    )
-    st.caption(f"✓ {st.session_state.tone} · 다음 답변부터 적용돼요")
-
-    # 필요할 때만 자세한 설정을 펼쳐서 수정합니다.
-    with st.expander("✏️ 나만의 선생님으로 꾸미기"):
-        st.caption("원하는 말투나 설명 방식을 자유롭게 적어 주세요.")
-        st.text_area("선생님의 성격과 말투", key="system_prompt", height=180)
-        st.caption("다른 선생님을 고르면 해당 성격의 기본 문장으로 바뀌어요.")
-
-    st.divider()
-    if st.button("🗑️ 대화 지우기", use_container_width=True):
-        st.session_state.messages = []
-        st.rerun()
-
-
 # 화면용 설명입니다. AI에게 전달하는 성격 문장은 그대로 유지합니다.
 TONE_LABELS = {
     "친절한 선생님": "🐰 친절한 선생님\n차근차근, 쉬운 말로 설명해요",
@@ -306,7 +241,6 @@ TEACHER_AVATARS = {"친절한 선생님": "🐰", "시크한 전문가": "🐱",
 teacher_avatar = TEACHER_AVATARS[st.session_state.tone]
 
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):   # "user" 또는 "assistant"
     with st.chat_message(message["role"], avatar="🌼" if message["role"] == "user" else teacher_avatar):   # "user" 또는 "assistant"
         st.markdown(message["content"])
 
@@ -331,13 +265,11 @@ def stream_answer(chat_messages):
 # --------------------------------------------------------------
 # 8) 아래쪽 입력창 — 여기에 질문을 적어서 보냅니다.
 # --------------------------------------------------------------
-user_input = st.chat_input("메시지를 입력하세요")
 user_input = st.chat_input("궁금한 이야기를 살포시 적어 주세요 🌷")
 
 if user_input:
     # 8-1) 사용자의 말을 기록하고 화면에 바로 보여 줍니다.
     st.session_state.messages.append({"role": "user", "content": user_input})
-    with st.chat_message("user"):
     with st.chat_message("user", avatar="🌼"):
         st.markdown(user_input)
 
@@ -348,7 +280,6 @@ if user_input:
     api_messages += st.session_state.messages
 
     # 8-3) AI의 답을 말풍선 안에서 실시간으로 흘려 보여 줍니다.
-    with st.chat_message("assistant"):
     with st.chat_message("assistant", avatar=teacher_avatar):
         try:
             # st.write_stream : 흘러오는 글자를 그대로 화면에 보여 주고,
