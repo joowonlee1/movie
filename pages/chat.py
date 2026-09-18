@@ -96,30 +96,67 @@ if "messages" not in st.session_state:
 def on_tone_change():
     st.session_state.system_prompt = TONES[st.session_state.tone]
 
-st.sidebar.header("설정")
+# 성격 선택을 카드 모양으로 꾸밉니다. 기본 라디오 선택 기능은 유지합니다.
+st.markdown("""
+<style>
+[data-testid="stSidebar"] [role="radiogroup"] { gap: 10px; }
+[data-testid="stSidebar"] label[data-baseweb="radio"] {
+    box-sizing: border-box; width: 100%; margin: 0; padding: 15px 14px;
+    border: 1px solid rgba(148,163,184,.3); border-radius: 16px;
+    background: rgba(148,163,184,.06);
+    transition: background 160ms ease, border-color 160ms ease;
+    cursor: pointer;
+}
+[data-testid="stSidebar"] label[data-baseweb="radio"]:hover {
+    border-color: #a78bfa; background: rgba(139,92,246,.08);
+}
+[data-testid="stSidebar"] label[data-baseweb="radio"]:has(input:checked) {
+    border-color: #a78bfa; background: rgba(139,92,246,.13);
+    box-shadow: 0 3px 12px rgba(139,92,246,.1);
+}
+[data-testid="stSidebar"] label[data-baseweb="radio"]:focus-within {
+    outline: 2px solid #a78bfa; outline-offset: 3px;
+}
+[data-testid="stSidebar"] label[data-baseweb="radio"] p {
+    white-space: pre-line; line-height: 1.65; font-size: .92rem;
+}
+@media (prefers-reduced-motion: reduce) {
+    [data-testid="stSidebar"] label[data-baseweb="radio"] { transition: none; }
+}
+</style>
+""", unsafe_allow_html=True)
 
-# 5-1) 말투 고르기 (세 가지 중 하나)
-#      고른 말투는 진행 중인 대화에도 "다음 답부터" 바로 적용됩니다.
-st.sidebar.radio(
-    "말투 고르기",
-    list(TONES.keys()),        # 친절한 선생님 / 시크한 전문가 / 되물어보는 조교
-    key="tone",                # 고른 값은 st.session_state.tone 에 저장됩니다.
-    on_change=on_tone_change,  # 말투를 바꾸는 순간 성격 문장도 함께 바뀝니다.
-)
+# 화면용 설명입니다. AI에게 전달하는 성격 문장은 그대로 유지합니다.
+TONE_LABELS = {
+    "친절한 선생님": "🌷 친절한 선생님\n차근차근, 쉬운 말로 설명해요",
+    "시크한 전문가": "✨ 시크한 전문가\n핵심만 콕, 간결하게 알려 줘요",
+    "되물어보는 조교": "🌱 되물어보는 조교\n힌트와 질문으로 생각을 도와줘요",
+}
 
-# 5-2) 성격(시스템) 문장 직접 고쳐 쓰기
-#      여기에 적은 내용이 곧 AI의 성격이 됩니다. 자유롭게 고칠 수 있어요.
-st.sidebar.text_area(
-    "성격 문장 직접 고치기",
-    key="system_prompt",       # 적은 값은 st.session_state.system_prompt 에 저장됩니다.
-    height=180,
-)
+with st.sidebar:
+    st.caption("나에게 맞는 배움의 방식")
+    st.subheader("어떤 선생님과 이야기할까요?")
+    st.caption("마음에 드는 스타일을 골라 보세요.")
+    st.radio(
+        "선생님 성격 선택",
+        list(TONES.keys()),
+        format_func=lambda tone: TONE_LABELS[tone],
+        key="tone",
+        on_change=on_tone_change,
+        label_visibility="collapsed",
+    )
+    st.caption(f"✓ {st.session_state.tone} · 다음 답변부터 적용돼요")
 
-# 5-3) 대화 지우기 버튼
-#      누르면 지금까지 쌓인 대화 기록을 모두 비웁니다.
-if st.sidebar.button("🗑️ 대화 지우기"):
-    st.session_state.messages = []
-    st.rerun()  # 화면을 새로 그려서 비운 결과를 바로 보여 줍니다.
+    # 필요할 때만 자세한 설정을 펼쳐서 수정합니다.
+    with st.expander("✏️ 나만의 선생님으로 꾸미기"):
+        st.caption("원하는 말투나 설명 방식을 자유롭게 적어 주세요.")
+        st.text_area("선생님의 성격과 말투", key="system_prompt", height=180)
+        st.caption("다른 선생님을 고르면 해당 성격의 기본 문장으로 바뀌어요.")
+
+    st.divider()
+    if st.button("🗑️ 대화 지우기", use_container_width=True):
+        st.session_state.messages = []
+        st.rerun()
 
 
 # --------------------------------------------------------------
