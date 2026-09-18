@@ -1,54 +1,8 @@
-import streamlit as st
-from openai import OpenAI
-
-# 페이지 기본 설정 (이 파일만의 설정 — main.py에는 영향 없음)
-st.set_page_config(page_title="AI 정보 선생님", page_icon="🤖")
-st.title("🤖 AI 정보 선생님")
-
-# 비밀 금고(secrets)에서 API 키를 꺼내 접속 준비
-client = OpenAI(
-    api_key=st.secrets["GEMINI_API_KEY"],
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-)
-
-# AI의 성격 (화면에는 띄우지 않고 요청에만 함께 보낸다)
-SYSTEM_PROMPT = (
-    "너는 중고등학생에게 설명하는 친절한 정보 선생님이야. "
-    "어려운 말은 쉬운 말로 바꿔 주고, 반드시 순수 한국어로만 답해"
-)
-
-# 대화 기록이 없으면 처음 한 번만 만들어 둔다
-if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-
-# 지금까지의 대화를 말풍선으로 다시 그리기 (성격 문장은 숨김)
-for msg in st.session_state.messages:
-    if msg["role"] != "system":
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-
-# 채팅 입력창
-user_input = st.chat_input("궁금한 것을 물어보세요!")
-
-if user_input:
-    # 보낸 말을 기록에 넣고 화면에도 그리기
-    st.session_state.messages.append({"role": "user", "content": user_input})
-    with st.chat_message("user"):
-        st.markdown(user_input)
-
-    # AI 답 받아오기 (실패하면 빨간 오류 화면 대신 안내 문구)
-    with st.chat_message("assistant"):
-        try:
-            stream = client.chat.completions.create(
-                model="gemini-3.5-flash-lite",       # 모델 이름은 그대로 유지
-                messages=st.session_state.messages,  # 대화 전체를 함께 보내 기억 유지
-                stream=True,                         # 글자가 실시간으로 흐르게
-            )
-            answer = st.write_stream(
-                chunk.choices[0].delta.content or ""
-                for chunk in stream if chunk.choices
-            )
-            # AI 답도 기록에 저장 (다음 질문에 이어서 사용)
-            st.session_state.messages.append({"role": "assistant", "content": answer})
-        except Exception:
-            st.error("응답을 받지 못했습니다. 잠시 후 다시 보내 주세요.")
+좋아. pages/chat.py에서 이어서 고쳐줘. main.py는 그대로 두고.
+- 사이드바에 '말투 고르기'를 넣어줘.
+  친절한 선생님 / 시크한 전문가 / 되물어보는 조교 세 가지로.
+  고른 말투가 진행 중인 대화에도 다음 답부터 바로 적용되게 해줘.
+- 사이드바에 성격 문장을 직접 고쳐 쓸 수 있는 칸도 넣어줘.
+- '되물어보는 조교'는 정답을 바로 알려 주지 않고 힌트를 하나 준 뒤 되묻다가,
+  학생이 스스로 답을 말하면 그때 확인해 주는 성격이야.
+- 사이드바에 '대화 지우기' 버튼을 넣어서 쌓인 대화 기록을 비울 수 있게 해줘.
